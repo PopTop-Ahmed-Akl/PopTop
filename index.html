@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PopTop - نظام إدارة المبيعات</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        .dark { --bg-primary: #0f172a; --bg-secondary: #1e293b; --bg-card: #334155; --text-primary: #f1f5f9; --text-secondary: #94a3b8; --accent: #3b82f6; --accent-hover: #60a5fa; --border: #475569; }
+        .light { --bg-primary: #f1f5f9; --bg-secondary: #ffffff; --bg-card: #ffffff; --text-primary: #0f172a; --text-secondary: #64748b; --accent: #2563eb; --accent-hover: #3b82f6; --border: #cbd5e1; }
+        body { background-color: var(--bg-primary); color: var(--text-primary); transition: all 0.3s ease; }
+        .card { background-color: var(--bg-card); border: 1px solid var(--border); }
+        .sidebar { background-color: var(--bg-secondary); border-left: 1px solid var(--border); }
+        .input-field { background-color: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); }
+        .input-field:focus { border-color: var(--accent); outline: none; }
+        .btn-primary { background-color: var(--accent); }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+        .text-secondary { color: var(--text-secondary); }
+        .table-row:hover { background-color: var(--bg-secondary); }
+        .nav-item { transition: all 0.2s ease; }
+        .nav-item:hover, .nav-item.active { background-color: var(--accent); color: white; }
+        .modal-overlay { background-color: rgba(0,0,0,0.7); }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+        .stat-card { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+        .animate-fade { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+        }
+        
+        .receipt-box {
+            background: white;
+            color: black;
+            font-family: 'Cairo', monospace;
+        }
+        .receipt-box * {
+            color: black !important;
+        }
+        
+        .closed-day-badge {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+        }
+        
+        .cart-item {
+            animation: slideIn 0.2s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                right: -280px;
+                top: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 100;
+                transition: right 0.3s ease;
+                overflow-y: auto;
+            }
+            
+            .sidebar.open {
+                right: 0;
+            }
+            
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 90;
+            }
+            
+            .sidebar-overlay.open {
+                display: block;
+            }
+            
+            .main-content {
+                margin-right: 0 !important;
+                width: 100% !important;
+            }
+            
+            .mobile-header {
+                display: flex !important;
+            }
+            
+            .stat-card p:first-child {
+                font-size: 12px;
+            }
+            
+            .stat-card p:nth-child(2) {
+                font-size: 20px !important;
+            }
+            
+            .table-responsive {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .table-responsive table {
+                min-width: 600px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .modal-content {
+                margin: 10px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            .hide-mobile {
+                display: none !important;
+            }
+            
+            .card {
+                padding: 12px !important;
+            }
+            
+            .nav-item {
+                padding: 12px !important;
+                font-size: 14px;
+            }
+            
+            .nav-item svg {
+                width: 20px;
+                height: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stat-card {
+                padding: 12px !important;
+            }
+            
+            .stat-card p:nth-child(2) {
+                font-size: 18px !important;
+            }
+            
+            .btn-primary, button {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            
+            h2, h3 {
+                font-size: 18px !important;
+            }
+            
+            .text-4xl {
+                font-size: 24px !important;
+            }
+            
+            .text-3xl {
+                font-size: 20px !important;
+            }
+            
+            .text-2xl {
+                font-size: 18px !important;
+            }
+        }
+    </style>
+</head>
+<body class="light min-h-screen">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="card rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl animate-fade">
+            <div class="text-center mb-6 md:mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-[var(--accent)] mb-2">PopTop</h1>
+                <p class="text-secondary text-sm md:text-base">نظام إدارة المبيعات</p>
+            </div>
+            <form id="loginForm" class="space-y-4 md:space-y-6">
+                <div>
+                    <label class="block mb-2 font-semibold text-sm md:text-base">اختر الحساب</label>
+                    <select id="loginUser" class="input-field w-full p-3 rounded-lg text-sm md:text-base">
+                        <option value="">-- اختر المستخدم --</option>
+                        <option value="Ahmed Akl">Ahmed Akl</option>
+                        <option value="Mahmoud Akl">Mahmoud Akl</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-2 font-semibold text-sm md:text-base">كلمة المرور</label>
+                    <input type="password" id="loginPassword" class="input-field w-full p-3 rounded-lg text-sm md:text-base" placeholder="أدخل كلمة المرور">
+                </div>
+                <div id="loginError" class="text-red-500 text-center hidden text-sm">بيانات الدخول غير صحيحة</div>
+                <button type="submit" class="btn-primary w-full p-3 rounded-lg text-white font-bold text-base md:text-lg transition">
+                    تسجيل الدخول
+                </button>
+            </form>
+            <p class="text-center text-secondary mt-4 md:mt-6 text-xs md:text-sm">تم الإنشاء بواسطة: Ahmed Akl & Mahmoud Akl</p>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="hidden min-h-screen">
+        <!-- Mobile Header -->
+        <header class="mobile-header hidden fixed top-0 right-0 left-0 z-50 card p-3 items-center justify-between">
+            <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-[var(--accent)] text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <h1 class="text-xl font-bold text-[var(--accent)]">PopTop</h1>
+            <div class="text-[var(--accent)] font-bold text-sm">
+                <span id="mobileTime"></span>
+            </div>
+        </header>
+        
+        <!-- Sidebar Overlay -->
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar w-64 min-h-screen p-4 fixed right-0 top-0 z-40 md:z-40">
+            <div class="text-center mb-6 pt-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-[var(--accent)]">PopTop</h1>
+                <p class="text-secondary text-xs md:text-sm mt-1">نظام إدارة المبيعات</p>
+            </div>
+            
+            <!-- Close button for mobile -->
+            <button onclick="closeSidebar()" class="md:hidden absolute top-4 left-4 p-2 rounded-lg bg-red-500 text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <nav class="space-y-2">
+                <button onclick="showSection('dashboard')" class="nav-item w-full p-3 rounded-lg text-right flex items-center gap-3 active" data-section="dashboard">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    لوحة التحكم
+                </button>
+                <button onclick="showSection('products')" class="nav-item w-full p-3 rounded-lg text-right flex items-center gap-3" data-section="products">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    المنتجات
+                </button>
+                <button onclick="showSection('sales')" class="nav-item w-full p-3 rounded-lg text-right flex items-center gap-3" data-section="sales">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    المبيعات
+                </button>
+                <button onclick="showSection('services')" class="nav-item w-full p-3 rounded-lg text-right flex items-center gap-3" data-section="services">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    الخدمات
+                </button>
+                <button onclick="showSection('history')" class="nav-item w-full p-3 rounded-lg text-right flex items-center gap-3" data-section="history">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    السجلات
+                </button>
+                <button onclick="showSection('dailyReport')" class="nav-item w-full p-3 rounded-lg text-right flex items-center gap-3" data-section="dailyReport">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    تقرير اليوم
+                </button>
+                <button onclick="showSection('archivedReports')" class="nav-item w-full p-3 rounded-lg text-right flex items-center gap-3" data-section="archivedReports">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                    أرشيف التقارير
+                </button>
+            </nav>
+            <div class="absolute bottom-4 right-4 left-4 space-y-3">
+                <div class="flex items-center justify-between p-3 card rounded-lg">
+                    <span class="text-xs md:text-sm">الوضع الليلي</span>
+                    <button id="themeToggle" onclick="toggleTheme()" class="w-12 h-6 rounded-full bg-gray-400 relative transition">
+                        <span class="absolute w-5 h-5 bg-white rounded-full top-0.5 right-0.5 transition-all"></span>
+                    </button>
+                </div>
+                <button onclick="logout()" class="w-full p-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition flex items-center justify-center gap-2 text-sm md:text-base">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    تسجيل الخروج
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-1 md:mr-64 p-4 md:p-6 pt-20 md:pt-6">
+            <!-- Header -->
+            <header class="card rounded-xl p-3 md:p-4 mb-4 md:mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 hide-mobile">
+                <div>
+                    <h2 id="pageTitle" class="text-xl md:text-2xl font-bold">لوحة التحكم</h2>
+                    <p class="text-secondary text-xs md:text-sm">مرحباً، <span id="currentUser"></span></p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-secondary text-xs md:text-sm">
+                        <span id="currentDate"></span>
+                    </div>
+                    <div class="text-[var(--accent)] font-bold text-sm md:text-lg">
+                        <span id="currentTime"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Mobile Page Title -->
+            <div class="md:hidden mb-4">
+                <h2 id="pageTitleMobile" class="text-lg font-bold">لوحة التحكم</h2>
+                <p class="text-secondary text-xs">مرحباً، <span id="currentUserMobile"></span></p>
+            </div>
+
+            <!-- Dashboard Section -->
+            <section id="dashboardSection" class="animate-fade">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
+                    <div class="stat-card rounded-xl p-4 md:p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-xs md:text-sm">مبيعات اليوم</p>
+                                <p id="todaySales" class="text-xl md:text-3xl font-bold mt-1 md:mt-2">0 ج.م</p>
+                            </div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center hide-mobile">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl p-4 md:p-6 text-white" style="background: linear-gradient(135deg, #0891b2, #06b6d4);">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-xs md:text-sm">خدمات اليوم</p>
+                                <p id="todayServices" class="text-xl md:text-3xl font-bold mt-1 md:mt-2">0 ج.م</p>
+                            </div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center hide-mobile">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl p-4 md:p-6 text-white" style="background: linear-gradient(135deg, #059669, #10b981);">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-xs md:text-sm">عدد المنتجات</p>
+                                <p id="totalProducts" class="text-xl md:text-3xl font-bold mt-1 md:mt-2">0</p>
+                            </div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center hide-mobile">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl p-4 md:p-6 text-white" style="background: linear-gradient(135deg, #7c3aed, #8b5cf6);">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-xs md:text-sm">إجمالي اليوم</p>
+                                <p id="todayTotal" class="text-xl md:text-3xl font-bold mt-1 md:mt-2">0 ج.م</p>
+                            </div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center hide-mobile">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                    <div class="card rounded-xl p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">حالة المخزون</h3>
+                        <div id="stockStatus" class="space-y-3 max-h-60 md:max-h-80 overflow-y-auto">
+                            <p class="text-secondary text-center py-4 text-sm">لا توجد منتجات</p>
+                        </div>
+                    </div>
+                    <div class="card rounded-xl p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">آخر العمليات</h3>
+                        <div id="recentTransactions" class="space-y-3 max-h-60 md:max-h-80 overflow-y-auto">
+                            <p class="text-secondary text-center py-4 text-sm">لا توجد عمليات</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Products Section -->
+            <section id="productsSection" class="hidden animate-fade">
+                <div class="card rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">إضافة منتج جديد</h3>
+                    <form id="productForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 form-grid">
+                        <div>
+                            <label class="block mb-2 text-xs md:text-sm font-semibold">اسم المنتج</label>
+                            <input type="text" id="productName" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-xs md:text-sm font-semibold">الفئة</label>
+                            <input type="text" id="productCategory" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" placeholder="مثال: إلكترونيات" required>
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-xs md:text-sm font-semibold">نوع البيع</label>
+                            <select id="productType" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" onchange="toggleUnitField()">
+                                <option value="unit">بالوحدة</option>
+                                <option value="variable">بالكمية المتغيرة</option>
+                            </select>
+                        </div>
+                        <div id="unitFieldContainer" class="hidden">
+                            <label class="block mb-2 text-xs md:text-sm font-semibold">وحدة القياس</label>
+                            <input type="text" id="productUnit" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" placeholder="مثال: متر، كيلو">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-xs md:text-sm font-semibold">السعر</label>
+                            <input type="number" id="productPrice" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" min="0" step="0.01" required>
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-xs md:text-sm font-semibold">الكمية المتاحة</label>
+                            <input type="number" id="productQuantity" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" min="0" required>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="btn-primary w-full p-2 md:p-3 rounded-lg text-white font-bold transition text-sm">
+                                إضافة المنتج
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card rounded-xl p-4 md:p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3 md:mb-4 gap-2">
+                        <h3 class="text-lg md:text-xl font-bold">قائمة المنتجات</h3>
+                        <input type="text" id="productSearch" class="input-field p-2 rounded-lg w-full md:w-64 text-sm" placeholder="بحث..." oninput="filterProducts()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-[var(--border)]">
+                                    <th class="text-right p-2 md:p-3">الاسم</th>
+                                    <th class="text-right p-2 md:p-3">الفئة</th>
+                                    <th class="text-right p-2 md:p-3">النوع</th>
+                                    <th class="text-right p-2 md:p-3">السعر</th>
+                                    <th class="text-right p-2 md:p-3">الكمية</th>
+                                    <th class="text-right p-2 md:p-3">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sales Section -->
+            <section id="salesSection" class="hidden animate-fade">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
+                    <!-- Add to Cart -->
+                    <div class="lg:col-span-2 card rounded-xl p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">إضافة منتجات للفاتورة</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 form-grid">
+                            <div class="md:col-span-2">
+                                <label class="block mb-2 text-xs md:text-sm font-semibold">المنتج</label>
+                                <select id="saleProduct" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" onchange="updateSaleInfo()">
+                                    <option value="">-- اختر المنتج --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-xs md:text-sm font-semibold">المتاح: <span id="availableQty" class="text-[var(--accent)]">-</span></label>
+                                <input type="number" id="saleQuantity" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" min="0.01" step="0.01" placeholder="الكمية" oninput="calculateItemTotal()">
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-xs md:text-sm font-semibold">الإجمالي: <span id="itemTotal" class="text-green-500">0 ج.م</span></label>
+                                <button type="button" onclick="addToCart()" class="btn-primary w-full p-2 md:p-3 rounded-lg text-white font-bold transition text-sm">
+                                    <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                    إضافة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="card rounded-xl p-4 md:p-6" style="background: linear-gradient(135deg, #059669, #10b981);">
+                        <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4 text-white">ملخص الفاتورة</h3>
+                        <div class="text-white text-sm">
+                            <div class="flex justify-between mb-2">
+                                <span>عدد المنتجات:</span>
+                                <span id="cartItemsCount" class="font-bold">0</span>
+                            </div>
+                            <div class="flex justify-between mb-4">
+                                <span>إجمالي الكمية:</span>
+                                <span id="cartTotalQty" class="font-bold">0</span>
+                            </div>
+                            <div class="border-t border-white/30 pt-4">
+                                <div class="flex justify-between text-xl md:text-2xl font-bold">
+                                    <span>الإجمالي:</span>
+                                    <span id="cartGrandTotal">0 ج.م</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Items -->
+                <div class="card rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3 md:mb-4 gap-2">
+                        <h3 class="text-lg md:text-xl font-bold">سلة المشتريات</h3>
+                        <button onclick="clearCart()" class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition text-xs md:text-sm">
+                            <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            إفراغ السلة
+                        </button>
+                    </div>
+                    <div id="cartItems" class="space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
+                        <p class="text-secondary text-center py-6 md:py-8 text-sm">السلة فارغة - قم بإضافة منتجات</p>
+                    </div>
+                    <div class="mt-4 md:mt-6 pt-4 border-t border-[var(--border)]">
+                        <button onclick="completeSale()" id="completeSaleBtn" class="btn-primary w-full p-3 md:p-4 rounded-lg text-white font-bold text-base md:text-lg transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <svg class="w-5 h-5 md:w-6 md:h-6 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            إتمام عملية البيع
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Today's Sales -->
+                <div class="card rounded-xl p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">مبيعات اليوم</h3>
+                    <div class="table-responsive">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-[var(--border)]">
+                                    <th class="text-right p-2 md:p-3">الوقت</th>
+                                    <th class="text-right p-2 md:p-3">رقم الفاتورة</th>
+                                    <th class="text-right p-2 md:p-3">عدد المنتجات</th>
+                                    <th class="text-right p-2 md:p-3">الإجمالي</th>
+                                    <th class="text-right p-2 md:p-3">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Services Section -->
+            <section id="servicesSection" class="hidden animate-fade">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
+                    <div class="card rounded-xl p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">إضافة خدمة جديدة</h3>
+                        <form id="serviceTypeForm" class="space-y-3 md:space-y-4">
+                            <div>
+                                <label class="block mb-2 text-xs md:text-sm font-semibold">اسم الخدمة</label>
+                                <input type="text" id="serviceName" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" required>
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-xs md:text-sm font-semibold">السعر الافتراضي</label>
+                                <input type="number" id="serviceDefaultPrice" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" min="0" step="0.01">
+                            </div>
+                            <button type="submit" class="btn-primary w-full p-2 md:p-3 rounded-lg text-white font-bold transition text-sm">
+                                إضافة الخدمة
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card rounded-xl p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">تسجيل خدمة مقدمة</h3>
+                        <form id="serviceRecordForm" class="space-y-3 md:space-y-4">
+                            <div>
+                                <label class="block mb-2 text-xs md:text-sm font-semibold">الخدمة</label>
+                                <select id="serviceSelect" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" onchange="updateServicePrice()" required>
+                                    <option value="">-- اختر الخدمة --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-xs md:text-sm font-semibold">السعر</label>
+                                <input type="number" id="servicePrice" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" min="0" step="0.01" required>
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-xs md:text-sm font-semibold">ملاحظات</label>
+                                <input type="text" id="serviceNotes" class="input-field w-full p-2 md:p-3 rounded-lg text-sm">
+                            </div>
+                            <button type="submit" class="btn-primary w-full p-2 md:p-3 rounded-lg text-white font-bold transition text-sm">
+                                حفظ الخدمة
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                    <div class="card rounded-xl p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">قائمة الخدمات</h3>
+                        <div class="table-responsive max-h-60 md:max-h-80 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-[var(--border)]">
+                                        <th class="text-right p-2 md:p-3">الخدمة</th>
+                                        <th class="text-right p-2 md:p-3">السعر</th>
+                                        <th class="text-right p-2 md:p-3">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="serviceTypesTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card rounded-xl p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">سجل الخدمات المقدمة اليوم</h3>
+                        <div class="table-responsive max-h-60 md:max-h-80 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-[var(--border)]">
+                                        <th class="text-right p-2 md:p-3">الوقت</th>
+                                        <th class="text-right p-2 md:p-3">الخدمة</th>
+                                        <th class="text-right p-2 md:p-3">السعر</th>
+                                        <th class="text-right p-2 md:p-3">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="serviceRecordsTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="historySection" class="hidden animate-fade">
+                <div class="card rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <div class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 items-start md:items-center justify-between">
+                        <h3 class="text-lg md:text-xl font-bold">سجل جميع العمليات</h3>
+                        <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                            <select id="historyFilter" class="input-field p-2 rounded-lg text-sm flex-1 md:flex-none" onchange="filterHistory()">
+                                <option value="all">الكل</option>
+                                <option value="sale">المبيعات</option>
+                                <option value="service">الخدمات</option>
+                            </select>
+                            <input type="date" id="historyDate" class="input-field p-2 rounded-lg text-sm flex-1 md:flex-none" onchange="filterHistory()">
+                            <button onclick="clearHistoryDateFilter()" class="bg-gray-500 hover:bg-gray-600 px-3 py-2 rounded-lg text-white transition text-sm">
+                                مسح
+                            </button>
+                            <button onclick="exportData()" class="btn-primary px-3 py-2 rounded-lg text-white transition text-sm">
+                                تصدير
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card rounded-xl p-4 md:p-6">
+                    <div class="table-responsive">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-[var(--border)]">
+                                    <th class="text-right p-2 md:p-3">التاريخ</th>
+                                    <th class="text-right p-2 md:p-3">النوع</th>
+                                    <th class="text-right p-2 md:p-3">التفاصيل</th>
+                                    <th class="text-right p-2 md:p-3">المبلغ</th>
+                                    <th class="text-right p-2 md:p-3">البائع</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Daily Report Section -->
+            <section id="dailyReportSection" class="hidden animate-fade">
+                <div class="card rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <div class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 items-start md:items-center justify-between">
+                        <h3 class="text-lg md:text-xl font-bold">تقرير اليوم</h3>
+                        <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                            <input type="date" id="reportDate" class="input-field p-2 rounded-lg text-sm flex-1 md:flex-none" onchange="loadDailyReport()">
+                            <button onclick="closeDayManually()" class="bg-orange-500 hover:bg-orange-600 px-3 py-2 rounded-lg text-white transition text-sm">
+                                إغلاق اليوم
+                            </button>
+                            <button onclick="printDailyReport()" class="btn-primary px-3 py-2 rounded-lg text-white transition text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                طباعة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 mb-4 md:mb-6">
+                    <div class="card rounded-xl p-4 md:p-6 text-center">
+                        <p class="text-secondary text-sm md:text-lg">إجمالي المبيعات</p>
+                        <p id="reportSalesTotal" class="text-2xl md:text-4xl font-bold text-blue-500 mt-1 md:mt-2">0 ج.م</p>
+                        <p id="reportSalesCount" class="text-secondary mt-1 text-xs md:text-sm">0 عملية</p>
+                    </div>
+                    <div class="card rounded-xl p-4 md:p-6 text-center">
+                        <p class="text-secondary text-sm md:text-lg">إجمالي الخدمات</p>
+                        <p id="reportServicesTotal" class="text-2xl md:text-4xl font-bold text-cyan-500 mt-1 md:mt-2">0 ج.م</p>
+                        <p id="reportServicesCount" class="text-secondary mt-1 text-xs md:text-sm">0 خدمة</p>
+                    </div>
+                    <div class="card rounded-xl p-4 md:p-6 text-center" style="background: linear-gradient(135deg, #059669, #10b981);">
+                        <p class="text-white/80 text-sm md:text-lg">الإجمالي الكلي</p>
+                        <p id="reportGrandTotal" class="text-2xl md:text-4xl font-bold text-white mt-1 md:mt-2">0 ج.م</p>
+                        <p class="text-white/80 mt-1 text-xs md:text-sm">المبيعات + الخدمات</p>
+                    </div>
+                </div>
+
+                <!-- Day Status -->
+                <div id="dayStatusBanner" class="card rounded-xl p-3 md:p-4 mb-4 md:mb-6 hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 md:gap-3">
+                            <div class="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 md:w-6 md:h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="font-bold text-green-600 text-sm md:text-base">تم إغلاق هذا اليوم</p>
+                                <p class="text-xs md:text-sm text-secondary" id="dayClosedInfo"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Details -->
+                <div class="card rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4 text-blue-500">تفاصيل المبيعات</h3>
+                    <div class="table-responsive">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-[var(--border)]">
+                                    <th class="text-right p-2 md:p-3">الوقت</th>
+                                    <th class="text-right p-2 md:p-3">رقم الفاتورة</th>
+                                    <th class="text-right p-2 md:p-3">المنتجات</th>
+                                    <th class="text-right p-2 md:p-3">الإجمالي</th>
+                                    <th class="text-right p-2 md:p-3">البائع</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportSalesTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Services Details -->
+                <div class="card rounded-xl p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4 text-cyan-500">تفاصيل الخدمات</h3>
+                    <div class="table-responsive">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-[var(--border)]">
+                                    <th class="text-right p-2 md:p-3">الوقت</th>
+                                    <th class="text-right p-2 md:p-3">الخدمة</th>
+                                    <th class="text-right p-2 md:p-3">الملاحظات</th>
+                                    <th class="text-right p-2 md:p-3">السعر</th>
+                                    <th class="text-right p-2 md:p-3">البائع</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportServicesTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Archived Reports Section -->
+            <section id="archivedReportsSection" class="hidden animate-fade">
+                <div class="card rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <h3 class="text-lg md:text-xl font-bold">أرشيف التقارير اليومية المحفوظة</h3>
+                    <p class="text-secondary mt-2 text-xs md:text-sm">جميع الأيام التي تم إغلاقها وحفظها</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4" id="archivedReportsList">
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div id="editModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden p-4">
+        <div class="card rounded-xl p-4 md:p-6 w-full max-w-md animate-fade modal-content">
+            <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4">تعديل المنتج</h3>
+            <form id="editProductForm" class="space-y-3 md:space-y-4">
+                <input type="hidden" id="editProductId">
+                <div>
+                    <label class="block mb-2 text-xs md:text-sm font-semibold">اسم المنتج</label>
+                    <input type="text" id="editProductName" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" required>
+                </div>
+                <div>
+                    <label class="block mb-2 text-xs md:text-sm font-semibold">الفئة</label>
+                    <input type="text" id="editProductCategory" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" required>
+                </div>
+                <div>
+                    <label class="block mb-2 text-xs md:text-sm font-semibold">السعر</label>
+                    <input type="number" id="editProductPrice" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" min="0" step="0.01" required>
+                </div>
+                <div>
+                    <label class="block mb-2 text-xs md:text-sm font-semibold">الكمية</label>
+                    <input type="number" id="editProductQuantity" class="input-field w-full p-2 md:p-3 rounded-lg text-sm" min="0" step="0.01" required>
+                </div>
+                <div class="flex gap-2 md:gap-3">
+                    <button type="submit" class="btn-primary flex-1 p-2 md:p-3 rounded-lg text-white font-bold transition text-sm">
+                        حفظ التعديلات
+                    </button>
+                    <button type="button" onclick="closeEditModal()" class="flex-1 p-2 md:p-3 rounded-lg bg-gray-500 text-white font-bold transition hover:bg-gray-600 text-sm">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sale Receipt Modal -->
+    <div id="receiptModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl p-4 md:p-6 w-full max-w-md animate-fade modal-content max-h-[90vh] overflow-y-auto">
+            <div id="receiptContent" class="receipt-box p-4 md:p-6 border-2 border-dashed border-gray-300 rounded-lg text-sm">
+            </div>
+            <div class="flex gap-2 md:gap-3 mt-4">
+                <button onclick="printReceipt()" class="btn-primary flex-1 p-2 md:p-3 rounded-lg text-white font-bold transition flex items-center justify-center gap-1 md:gap-2 text-sm">
+                    <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    طباعة
+                </button>
+                <button onclick="closeReceiptModal()" class="flex-1 p-2 md:p-3 rounded-lg bg-gray-500 text-white font-bold transition hover:bg-gray-600 text-sm">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Close Modal -->
+    <div id="dayCloseModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden p-4">
+        <div class="card rounded-xl p-4 md:p-8 w-full max-w-lg animate-fade modal-content">
+            <div class="text-center mb-4 md:mb-6">
+                <div class="w-16 h-16 md:w-20 md:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                    <svg class="w-8 h-8 md:w-10 md:h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-xl md:text-2xl font-bold">تم إغلاق وحفظ اليوم بنجاح</h3>
+                <p class="text-secondary mt-2 text-sm" id="dayCloseDate"></p>
+            </div>
+            <div class="space-y-3 md:space-y-4 mb-4 md:mb-6">
+                <div class="flex justify-between items-center p-3 md:p-4 bg-blue-50 rounded-lg">
+                    <span class="font-semibold text-blue-700 text-sm">إجمالي المبيعات:</span>
+                    <span class="text-xl md:text-2xl font-bold text-blue-600" id="dayCloseSales">0 ج.م</span>
+                </div>
+                <div class="flex justify-between items-center p-3 md:p-4 bg-cyan-50 rounded-lg">
+                    <span class="font-semibold text-cyan-700 text-sm">إجمالي الخدمات:</span>
+                    <span class="text-xl md:text-2xl font-bold text-cyan-600" id="dayCloseServices">0 ج.م</span>
+                </div>
+                <div class="flex justify-between items-center p-3 md:p-4 bg-green-100 rounded-lg">
+                    <span class="font-semibold text-green-700 text-sm">الإجمالي الكلي:</span>
+                    <span class="text-2xl md:text-3xl font-bold text-green-600" id="dayCloseTotal">0 ج.م</span>
+                </div>
+            </div>
+            <p class="text-center text-secondary text-xs mb-4">
+                تم حفظ هذا التقرير ويمكنك الوصول إليه من "أرشيف التقارير" في أي وقت
+            </p>
+            <div class="flex gap-2 md:gap-3">
+                <button onclick="printDayCloseReport()" class="btn-primary flex-1 p-2 md:p-3 rounded-lg text-white font-bold transition text-sm">
+                    طباعة التقرير
+                </button>
+                <button onclick="closeDayCloseModal()" class="flex-1 p-2 md:p-3 rounded-lg bg-gray-500 text-white font-bold transition hover:bg-gray-600 text-sm">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Area (Hidden) -->
+    <div id="printArea" class="hidden"></div>
+
+    <script>
+        // Data Storage
+        let products = JSON.parse(localStorage.getItem('poptop_products')) || [];
+        let sales = JSON.parse(localStorage.getItem('poptop_sales')) || [];
+        let serviceTypes = JSON.parse(localStorage.getItem('poptop_serviceTypes')) || [];
+        let serviceRecords = JSON.parse(localStorage.getItem('poptop_serviceRecords')) || [];
+        let dayClosures = JSON.parse(localStorage.getItem('poptop_dayClosures')) || [];
+        let currentUser = null;
+        let lastReceiptData = null;
+        let currentClosureDate = null;
+        
+        // Shopping Cart
+        let cart = [];
+
+        // Users
+        const users = {
+            'Ahmed Akl': '151182',
+            'Mahmoud Akl': '2268865'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            checkDayClose();
+            setInterval(checkDayClose, 60000);
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('reportDate').value = today;
+            
+            // Handle resize
+            handleResize();
+            window.addEventListener('resize', handleResize);
+        });
+
+        // Handle responsive layout
+        function handleResize() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+            }
+        }
+
+        // Toggle Sidebar for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        }
+
+        // Theme Management
+        function loadTheme() {
+            const theme = localStorage.getItem('poptop_theme') || 'light';
+            document.body.className = theme + ' min-h-screen';
+            updateThemeToggle(theme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.className = newTheme + ' min-h-screen';
+            localStorage.setItem('poptop_theme', newTheme);
+            updateThemeToggle(newTheme);
+        }
+
+        function updateThemeToggle(theme) {
+            const toggle = document.getElementById('themeToggle');
+            const span = toggle.querySelector('span');
+            if (theme === 'dark') {
+                toggle.classList.remove('bg-gray-400');
+                toggle.classList.add('bg-[var(--accent)]');
+                span.style.transform = 'translateX(-24px)';
+            } else {
+                toggle.classList.add('bg-gray-400');
+                toggle.classList.remove('bg-[var(--accent)]');
+                span.style.transform = 'translateX(0)';
+            }
+        }
+
+        // Date & Time
+        function updateDateTime() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('ar-EG', dateOptions);
+            const timeStr = now.toLocaleTimeString('ar-EG');
+            
+            if (document.getElementById('currentDate')) {
+                document.getElementById('currentDate').textContent = dateStr;
+            }
+            if (document.getElementById('currentTime')) {
+                document.getElementById('currentTime').textContent = timeStr;
+            }
+            if (document.getElementById('mobileTime')) {
+                document.getElementById('mobileTime').textContent = timeStr;
+            }
+        }
+
+        // Check for day close at midnight
+        function checkDayClose() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            
+            if (hours === 0 && minutes === 0) {
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const dateStr = yesterday.toISOString().split('T')[0];
+                
+                const alreadyClosed = dayClosures.find(d => d.date === dateStr);
+                if (!alreadyClosed && currentUser) {
+                    performDayClose(dateStr);
+                }
+            }
+        }
+
+        function performDayClose(dateStr) {
+            const daySales = sales.filter(s => s.date.split('T')[0] === dateStr);
+            const dayServices = serviceRecords.filter(r => r.date.split('T')[0] === dateStr);
+            
+            const salesTotal = daySales.reduce((sum, s) => sum + s.grandTotal, 0);
+            const servicesTotal = dayServices.reduce((sum, r) => sum + r.price, 0);
+            
+            const closure = {
+                date: dateStr,
+                salesTotal,
+                servicesTotal,
+                grandTotal: salesTotal + servicesTotal,
+                salesCount: daySales.length,
+                servicesCount: dayServices.length,
+                closedAt: new Date().toISOString(),
+                closedBy: currentUser,
+                salesDetails: daySales,
+                servicesDetails: dayServices
+            };
+            
+            dayClosures.push(closure);
+            localStorage.setItem('poptop_dayClosures', JSON.stringify(dayClosures));
+            
+            currentClosureDate = dateStr;
+            showDayCloseModal(closure);
+        }
+
+        function closeDayManually() {
+            const dateStr = document.getElementById('reportDate').value || new Date().toISOString().split('T')[0];
+            
+            const alreadyClosed = dayClosures.find(d => d.date === dateStr);
+            if (alreadyClosed) {
+                showNotification('تم إغلاق وحفظ هذا اليوم مسبقاً', 'error');
+                return;
+            }
+            
+            if (!confirm(`هل تريد إغلاق وحفظ يوم ${new Date(dateStr).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}؟`)) {
+                return;
+            }
+            
+            performDayClose(dateStr);
+        }
+
+        function showDayCloseModal(closure) {
+            document.getElementById('dayCloseDate').textContent = new Date(closure.date).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('dayCloseSales').textContent = closure.salesTotal.toFixed(2) + ' ج.م';
+            document.getElementById('dayCloseServices').textContent = closure.servicesTotal.toFixed(2) + ' ج.م';
+            document.getElementById('dayCloseTotal').textContent = closure.grandTotal.toFixed(2) + ' ج.م';
+            document.getElementById('dayCloseModal').classList.remove('hidden');
+        }
+
+        function closeDayCloseModal() {
+            document.getElementById('dayCloseModal').classList.add('hidden');
+            loadDailyReport();
+            renderArchivedReports();
+        }
+
+        function printDayCloseReport() {
+            printDailyReport();
+            closeDayCloseModal();
+        }
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPassword').value;
+            
+            if (users[user] && users[user] === pass) {
+                currentUser = user;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('currentUser').textContent = user;
+                document.getElementById('currentUserMobile').textContent = user;
+                refreshAllData();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+                setTimeout(() => document.getElementById('loginError').classList.add('hidden'), 3000);
+            }
+        });
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPassword').value = '';
+            closeSidebar();
+        }
+
+        // Navigation
+        function showSection(section) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`[data-section="${section}"]`).classList.add('active');
+
+            const titles = {
+                dashboard: 'لوحة التحكم',
+                products: 'المنتجات',
+                sales: 'المبيعات',
+                services: 'الخدمات',
+                history: 'السجلات',
+                dailyReport: 'تقرير اليوم',
+                archivedReports: 'أرشيف التقارير'
+            };
+            document.getElementById('pageTitle').textContent = titles[section];
+            document.getElementById('pageTitleMobile').textContent = titles[section];
+            
+            if (section === 'dailyReport') loadDailyReport();
+            if (section === 'archivedReports') renderArchivedReports();
+            
+            closeSidebar();
+        }
+
+        // Products
+        function toggleUnitField() {
+            const type = document.getElementById('productType').value;
+            document.getElementById('unitFieldContainer').classList.toggle('hidden', type !== 'variable');
+        }
+
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const product = {
+                id: Date.now(),
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                type: document.getElementById('productType').value,
+                unit: document.getElementById('productUnit').value || 'وحدة',
+                price: parseFloat(document.getElementById('productPrice').value),
+                quantity: parseFloat(document.getElementById('productQuantity').value)
+            };
+            products.push(product);
+            saveProducts();
+            this.reset();
+            document.getElementById('unitFieldContainer').classList.add('hidden');
+            refreshAllData();
+            showNotification('تم إضافة المنتج بنجاح');
+        });
+
+        function saveProducts() {
+            localStorage.setItem('poptop_products', JSON.stringify(products));
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById('productsTable');
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-secondary text-sm">لا توجد منتجات</td></tr>';
+                return;
+            }
+            tbody.innerHTML = products.map(p => `
+                <tr class="table-row border-b border-[var(--border)]">
+                    <td class="p-2 md:p-3">${p.name}</td>
+                    <td class="p-2 md:p-3">${p.category}</td>
+                    <td class="p-2 md:p-3">${p.type === 'variable' ? 'متغير (' + p.unit + ')' : 'وحدة'}</td>
+                    <td class="p-2 md:p-3">${p.price.toFixed(2)} ج.م</td>
+                    <td class="p-2 md:p-3 ${p.quantity < 5 ? 'text-red-500 font-bold' : ''}">${p.quantity} ${p.type === 'variable' ? p.unit : ''}</td>
+                    <td class="p-2 md:p-3">
+                        <button onclick="editProduct(${p.id})" class="px-2 py-1 bg-blue-500 text-white rounded text-xs ml-1 hover:bg-blue-600 transition">تعديل</button>
+                        <button onclick="deleteProduct(${p.id})" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition">حذف</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterProducts() {
+            const search = document.getElementById('productSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#productsTable tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (product) {
+                document.getElementById('editProductId').value = id;
+                document.getElementById('editProductName').value = product.name;
+                document.getElementById('editProductCategory').value = product.category;
+                document.getElementById('editProductPrice').value = product.price;
+                document.getElementById('editProductQuantity').value = product.quantity;
+                document.getElementById('editModal').classList.remove('hidden');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        document.getElementById('editProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editProductId').value);
+            const idx = products.findIndex(p => p.id === id);
+            if (idx !== -1) {
+                products[idx].name = document.getElementById('editProductName').value;
+                products[idx].category = document.getElementById('editProductCategory').value;
+                products[idx].price = parseFloat(document.getElementById('editProductPrice').value);
+                products[idx].quantity = parseFloat(document.getElementById('editProductQuantity').value);
+                saveProducts();
+                closeEditModal();
+                refreshAllData();
+                showNotification('تم تعديل المنتج بنجاح');
+            }
+        });
+
+        function deleteProduct(id) {
+            if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+                products = products.filter(p => p.id !== id);
+                saveProducts();
+                refreshAllData();
+                showNotification('تم حذف المنتج');
+            }
+        }
+
+        // Shopping Cart Functions
+        function updateSaleProductOptions() {
+            const select = document.getElementById('saleProduct');
+            select.innerHTML = '<option value="">-- اختر المنتج --</option>';
+            products.filter(p => p.quantity > 0).forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${p.name} - ${p.price} ج.م ${p.type === 'variable' ? '/' + p.unit : ''}</option>`;
+            });
+        }
+
+        function updateSaleInfo() {
+            const id = parseInt(document.getElementById('saleProduct').value);
+            const product = products.find(p => p.id === id);
+            if (product) {
+                const inCart = cart.filter(c => c.productId === id).reduce((sum, c) => sum + c.quantity, 0);
+                const available = product.quantity - inCart;
+                document.getElementById('availableQty').textContent = available + ' ' + (product.type === 'variable' ? product.unit : 'وحدة');
+                document.getElementById('saleQuantity').value = '';
+                document.getElementById('itemTotal').textContent = '0 ج.م';
+            } else {
+                document.getElementById('availableQty').textContent = '-';
+                document.getElementById('saleQuantity').value = '';
+                document.getElementById('itemTotal').textContent = '0 ج.م';
+            }
+        }
+
+        function calculateItemTotal() {
+            const id = parseInt(document.getElementById('saleProduct').value);
+            const qty = parseFloat(document.getElementById('saleQuantity').value) || 0;
+            const product = products.find(p => p.id === id);
+            const qtyInput = document.getElementById('saleQuantity');
+            const itemTotalSpan = document.getElementById('itemTotal');
+            
+            if (product) {
+                const inCart = cart.filter(c => c.productId === id).reduce((sum, c) => sum + c.quantity, 0);
+                const available = product.quantity - inCart;
+                const total = qty * product.price;
+                
+                if (qty > available) {
+                    qtyInput.classList.add('border-red-500', 'bg-red-50');
+                    qtyInput.classList.remove('border-green-500');
+                    itemTotalSpan.textContent = `خطأ! المتاح ${available} فقط`;
+                    itemTotalSpan.classList.add('text-red-500');
+                    itemTotalSpan.classList.remove('text-green-500');
+                } else if (qty > 0) {
+                    qtyInput.classList.remove('border-red-500', 'bg-red-50');
+                    qtyInput.classList.add('border-green-500');
+                    itemTotalSpan.textContent = total.toFixed(2) + ' ج.م';
+                    itemTotalSpan.classList.remove('text-red-500');
+                    itemTotalSpan.classList.add('text-green-500');
+                } else {
+                    qtyInput.classList.remove('border-red-500', 'bg-red-50', 'border-green-500');
+                    itemTotalSpan.textContent = '0 ج.م';
+                    itemTotalSpan.classList.remove('text-red-500');
+                    itemTotalSpan.classList.add('text-green-500');
+                }
+            }
+        }
+
+        function addToCart() {
+            const id = parseInt(document.getElementById('saleProduct').value);
+            const qty = parseFloat(document.getElementById('saleQuantity').value);
+            const product = products.find(p => p.id === id);
+            
+            if (!product) {
+                showNotification('الرجاء اختيار منتج', 'error');
+                return;
+            }
+            if (!qty || qty <= 0) {
+                showNotification('الرجاء إدخال كمية صحيحة', 'error');
+                return;
+            }
+            
+            const inCart = cart.filter(c => c.productId === id).reduce((sum, c) => sum + c.quantity, 0);
+            const available = product.quantity - inCart;
+            
+            if (qty > available) {
+                showNotification(`الكمية المطلوبة (${qty}) أكبر من المتاح (${available}) - لا يمكن إتمام العملية`, 'error');
+                document.getElementById('saleQuantity').value = '';
+                document.getElementById('saleQuantity').focus();
+                return;
+            }
+            
+            const cartItem = {
+                cartId: Date.now(),
+                productId: id,
+                productName: product.name,
+                quantity: qty,
+                unit: product.type === 'variable' ? product.unit : 'وحدة',
+                price: product.price,
+                total: qty * product.price
+            };
+            
+            cart.push(cartItem);
+            renderCart();
+            
+            document.getElementById('saleProduct').value = '';
+            document.getElementById('saleQuantity').value = '';
+            document.getElementById('availableQty').textContent = '-';
+            document.getElementById('itemTotal').textContent = '0 ج.م';
+            
+            showNotification('تم إضافة المنتج للسلة');
+        }
+
+        function renderCart() {
+            const cartDiv = document.getElementById('cartItems');
+            const completeBtn = document.getElementById('completeSaleBtn');
+            
+            if (cart.length === 0) {
+                cartDiv.innerHTML = '<p class="text-secondary text-center py-6 md:py-8 text-sm">السلة فارغة - قم بإضافة منتجات</p>';
+                completeBtn.disabled = true;
+                document.getElementById('cartItemsCount').textContent = '0';
+                document.getElementById('cartTotalQty').textContent = '0';
+                document.getElementById('cartGrandTotal').textContent = '0 ج.م';
+                return;
+            }
+            
+            completeBtn.disabled = false;
+            
+            cartDiv.innerHTML = cart.map((item, index) => `
+                <div class="cart-item flex items-center justify-between p-2 md:p-3 card rounded-lg">
+                    <div class="flex-1">
+                        <p class="font-semibold text-sm">${item.productName}</p>
+                        <p class="text-xs text-secondary">${item.quantity} ${item.unit} × ${item.price.toFixed(2)} ج.م</p>
+                    </div>
+                    <div class="flex items-center gap-2 md:gap-4">
+                        <span class="text-green-500 font-bold text-sm md:text-lg">${item.total.toFixed(2)} ج.م</span>
+                        <button onclick="removeFromCart(${item.cartId})" class="p-1 md:p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition">
+                            <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            const totalItems = cart.length;
+            const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const grandTotal = cart.reduce((sum, item) => sum + item.total, 0);
+            
+            document.getElementById('cartItemsCount').textContent = totalItems;
+            document.getElementById('cartTotalQty').textContent = totalQty.toFixed(2);
+            document.getElementById('cartGrandTotal').textContent = grandTotal.toFixed(2) + ' ج.م';
+            
+            updateSaleInfo();
+        }
+
+        function removeFromCart(cartId) {
+            cart = cart.filter(item => item.cartId !== cartId);
+            renderCart();
+            showNotification('تم إزالة المنتج من السلة');
+        }
+
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm('هل تريد إفراغ السلة؟')) {
+                cart = [];
+                renderCart();
+                showNotification('تم إفراغ السلة');
+            }
+        }
+
+        function completeSale() {
+            if (cart.length === 0) {
+                showNotification('السلة فارغة', 'error');
+                return;
+            }
+            
+            const grandTotal = cart.reduce((sum, item) => sum + item.total, 0);
+            
+            const sale = {
+                id: Date.now(),
+                invoiceNumber: 'INV-' + Date.now(),
+                items: [...cart],
+                grandTotal: grandTotal,
+                date: new Date().toISOString(),
+                user: currentUser
+            };
+            
+            cart.forEach(item => {
+                const product = products.find(p => p.id === item.productId);
+                if (product) {
+                    product.quantity -= item.quantity;
+                }
+            });
+            
+            sales.push(sale);
+            saveProducts();
+            saveSales();
+            
+            showMultiItemReceipt(sale);
+            
+            cart = [];
+            renderCart();
+            refreshAllData();
+            showNotification('تم إتمام عملية البيع بنجاح');
+        }
+
+        function showMultiItemReceipt(sale) {
+            lastReceiptData = sale;
+            const now = new Date(sale.date);
+            
+            let itemsHTML = sale.items.map(item => `
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #ddd;">
+                    <div style="flex: 1;">
+                        <span style="font-weight: 600;">${item.productName}</span>
+                        <br><span style="font-size: 11px; color: #666;">${item.quantity} ${item.unit} × ${item.price.toFixed(2)}</span>
+                    </div>
+                    <span style="font-weight: bold;">${item.total.toFixed(2)} ج.م</span>
+                </div>
+            `).join('');
+            
+            const receiptHTML = `
+                <div class="text-center mb-3">
+                    <h2 class="text-xl font-bold text-blue-600">PopTop</h2>
+                    <p class="text-gray-600 text-xs">نظام إدارة المبيعات</p>
+                    <div class="border-b-2 border-dashed border-gray-300 my-2"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <p class="text-base font-bold">فاتورة بيع</p>
+                    <p class="text-gray-600 text-xs">رقم: ${sale.invoiceNumber}</p>
+                </div>
+                <div class="space-y-1 text-xs mb-3">
+                    <div class="flex justify-between">
+                        <span>التاريخ:</span>
+                        <span>${now.toLocaleDateString('ar-EG')}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>الوقت:</span>
+                        <span>${now.toLocaleTimeString('ar-EG')}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>البائع:</span>
+                        <span class="font-semibold">${sale.user}</span>
+                    </div>
+                </div>
+                <div class="border-b-2 border-dashed border-gray-300 my-2"></div>
+                <div class="mb-3">
+                    <p class="font-bold mb-2 text-sm">المنتجات (${sale.items.length}):</p>
+                    ${itemsHTML}
+                </div>
+                <div class="border-b-2 border-dashed border-gray-300 my-2"></div>
+                <div class="flex justify-between text-lg font-bold text-green-600">
+                    <span>الإجمالي:</span>
+                    <span>${sale.grandTotal.toFixed(2)} ج.م</span>
+                </div>
+                <div class="border-b-2 border-dashed border-gray-300 my-2"></div>
+                <div class="text-center text-gray-500 text-xs mt-3">
+                    <p>شكراً لتعاملكم معنا</p>
+                    <p>PopTop - Ahmed Akl & Mahmoud Akl</p>
+                </div>
+            `;
+            document.getElementById('receiptContent').innerHTML = receiptHTML;
+            document.getElementById('receiptModal').classList.remove('hidden');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+        }
+
+        function printReceipt() {
+            const printContent = document.getElementById('receiptContent').innerHTML;
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = `
+                <div style="padding: 20px; max-width: 300px; margin: 0 auto; font-family: 'Cairo', sans-serif; direction: rtl;">
+                    ${printContent}
+                </div>
+            `;
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden');
+        }
+
+        function saveSales() {
+            localStorage.setItem('poptop_sales', JSON.stringify(sales));
+        }
+
+        function renderSales() {
+            const tbody = document.getElementById('salesTable');
+            const today = new Date().toDateString();
+            const todaySales = sales.filter(s => new Date(s.date).toDateString() === today);
+            
+            if (todaySales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-secondary text-sm">لا توجد مبيعات اليوم</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = todaySales.slice().reverse().map(s => `
+                <tr class="table-row border-b border-[var(--border)]">
+                    <td class="p-2 md:p-3">${new Date(s.date).toLocaleTimeString('ar-EG')}</td>
+                    <td class="p-2 md:p-3 font-mono text-xs">${s.invoiceNumber}</td>
+                    <td class="p-2 md:p-3">${s.items.length} منتج</td>
+                    <td class="p-2 md:p-3 text-green-500 font-bold">${s.grandTotal.toFixed(2)} ج.م</td>
+                    <td class="p-2 md:p-3">
+                        <button onclick="viewSaleReceipt(${s.id})" class="px-2 py-1 bg-blue-500 text-white rounded text-xs ml-1 hover:bg-blue-600 transition">عرض</button>
+                        <button onclick="deleteSale(${s.id})" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition">حذف</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function viewSaleReceipt(id) {
+            const sale = sales.find(s => s.id === id);
+            if (sale) {
+                showMultiItemReceipt(sale);
+            }
+        }
+
+        function deleteSale(id) {
+            if (confirm('هل تريد حذف هذه العملية؟ سيتم إعادة الكمية للمخزون.')) {
+                const sale = sales.find(s => s.id === id);
+                if (sale) {
+                    sale.items.forEach(item => {
+                        const product = products.find(p => p.id === item.productId);
+                        if (product) {
+                            product.quantity += item.quantity;
+                        }
+                    });
+                    saveProducts();
+                    
+                    sales = sales.filter(s => s.id !== id);
+                    saveSales();
+                    refreshAllData();
+                    showNotification('تم حذف العملية');
+                }
+            }
+        }
+
+        // Services
+        document.getElementById('serviceTypeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const service = {
+                id: Date.now(),
+                name: document.getElementById('serviceName').value,
+                defaultPrice: parseFloat(document.getElementById('serviceDefaultPrice').value) || 0
+            };
+            serviceTypes.push(service);
+            saveServiceTypes();
+            this.reset();
+            refreshAllData();
+            showNotification('تم إضافة الخدمة بنجاح');
+        });
+
+        function saveServiceTypes() {
+            localStorage.setItem('poptop_serviceTypes', JSON.stringify(serviceTypes));
+        }
+
+        function updateServiceOptions() {
+            const select = document.getElementById('serviceSelect');
+            select.innerHTML = '<option value="">-- اختر الخدمة --</option>';
+            serviceTypes.forEach(s => {
+                select.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+            });
+        }
+
+        function updateServicePrice() {
+            const id = parseInt(document.getElementById('serviceSelect').value);
+            const service = serviceTypes.find(s => s.id === id);
+            if (service) {
+                document.getElementById('servicePrice').value = service.defaultPrice;
+            }
+        }
+
+        document.getElementById('serviceRecordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('serviceSelect').value);
+            const service = serviceTypes.find(s => s.id === id);
+            
+            if (!service) {
+                showNotification('الرجاء اختيار خدمة', 'error');
+                return;
+            }
+
+            const record = {
+                id: Date.now(),
+                serviceId: id,
+                serviceName: service.name,
+                price: parseFloat(document.getElementById('servicePrice').value),
+                notes: document.getElementById('serviceNotes').value,
+                date: new Date().toISOString(),
+                user: currentUser
+            };
+
+            serviceRecords.push(record);
+            saveServiceRecords();
+            this.reset();
+            refreshAllData();
+            showNotification('تم تسجيل الخدمة بنجاح');
+        });
+
+        function saveServiceRecords() {
+            localStorage.setItem('poptop_serviceRecords', JSON.stringify(serviceRecords));
+        }
+
+        function renderServiceTypes() {
+            const tbody = document.getElementById('serviceTypesTable');
+            if (serviceTypes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-secondary text-sm">لا توجد خدمات</td></tr>';
+                return;
+            }
+            tbody.innerHTML = serviceTypes.map(s => `
+                <tr class="table-row border-b border-[var(--border)]">
+                    <td class="p-2 md:p-3">${s.name}</td>
+                    <td class="p-2 md:p-3">${s.defaultPrice.toFixed(2)} ج.م</td>
+                    <td class="p-2 md:p-3">
+                        <button onclick="deleteServiceType(${s.id})" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition">حذف</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteServiceType(id) {
+            if (confirm('هل أنت متأكد من حذف هذه الخدمة؟')) {
+                serviceTypes = serviceTypes.filter(s => s.id !== id);
+                saveServiceTypes();
+                refreshAllData();
+                showNotification('تم حذف الخدمة');
+            }
+        }
+
+        function renderServiceRecords() {
+            const tbody = document.getElementById('serviceRecordsTable');
+            const today = new Date().toDateString();
+            const todayServices = serviceRecords.filter(r => new Date(r.date).toDateString() === today);
+            
+            if (todayServices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-secondary text-sm">لا توجد خدمات اليوم</td></tr>';
+                return;
+            }
+            tbody.innerHTML = todayServices.slice().reverse().map(r => `
+                <tr class="table-row border-b border-[var(--border)]">
+                    <td class="p-2 md:p-3">${new Date(r.date).toLocaleTimeString('ar-EG')}</td>
+                    <td class="p-2 md:p-3">${r.serviceName}</td>
+                    <td class="p-2 md:p-3 text-green-500 font-bold">${r.price.toFixed(2)} ج.م</td>
+                    <td class="p-2 md:p-3">
+                        <button onclick="deleteServiceRecord(${r.id})" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition">حذف</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteServiceRecord(id) {
+            if (confirm('هل تريد حذف هذا السجل؟')) {
+                serviceRecords = serviceRecords.filter(r => r.id !== id);
+                saveServiceRecords();
+                refreshAllData();
+                showNotification('تم حذف السجل');
+            }
+        }
+
+        // Dashboard
+        function updateDashboard() {
+            const today = new Date().toDateString();
+            const todaySalesData = sales.filter(s => new Date(s.date).toDateString() === today);
+            const todayServicesData = serviceRecords.filter(r => new Date(r.date).toDateString() === today);
+            
+            const todaySalesAmount = todaySalesData.reduce((sum, s) => sum + s.grandTotal, 0);
+            const todayServicesAmount = todayServicesData.reduce((sum, r) => sum + r.price, 0);
+            
+            document.getElementById('todaySales').textContent = todaySalesAmount.toFixed(2) + ' ج.م';
+            document.getElementById('todayServices').textContent = todayServicesAmount.toFixed(2) + ' ج.م';
+            document.getElementById('totalProducts').textContent = products.length;
+            document.getElementById('todayTotal').textContent = (todaySalesAmount + todayServicesAmount).toFixed(2) + ' ج.م';
+
+            const stockDiv = document.getElementById('stockStatus');
+            if (products.length === 0) {
+                stockDiv.innerHTML = '<p class="text-secondary text-center py-4 text-sm">لا توجد منتجات</p>';
+            } else {
+                stockDiv.innerHTML = products.map(p => {
+                    const percent = Math.min(100, (p.quantity / 100) * 100);
+                    const color = p.quantity < 5 ? 'bg-red-500' : p.quantity < 20 ? 'bg-yellow-500' : 'bg-green-500';
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-[var(--bg-secondary)]">
+                            <span class="font-semibold text-sm">${p.name}</span>
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 md:w-24 h-2 bg-gray-300 rounded-full overflow-hidden">
+                                    <div class="${color} h-full rounded-full" style="width: ${percent}%"></div>
+                                </div>
+                                <span class="text-sm ${p.quantity < 5 ? 'text-red-500' : ''}">${p.quantity}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const recentDiv = document.getElementById('recentTransactions');
+            const allTransactions = [
+                ...sales.map(s => ({ ...s, type: 'sale', total: s.grandTotal, displayName: s.items.map(i => i.productName).join('، ') })),
+                ...serviceRecords.map(r => ({ ...r, type: 'service', total: r.price, displayName: r.serviceName }))
+            ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+
+            if (allTransactions.length === 0) {
+                recentDiv.innerHTML = '<p class="text-secondary text-center py-4 text-sm">لا توجد عمليات</p>';
+            } else {
+                recentDiv.innerHTML = allTransactions.map(t => `
+                    <div class="flex items-center justify-between p-2 rounded-lg hover:bg-[var(--bg-secondary)]">
+                        <div class="flex-1 min-w-0">
+                            <span class="font-semibold text-sm truncate block">${t.displayName.substring(0, 20)}${t.displayName.length > 20 ? '...' : ''}</span>
+                            <span class="text-xs px-1 py-0.5 rounded ${t.type === 'sale' ? 'bg-blue-500' : 'bg-cyan-500'} text-white">${t.type === 'sale' ? 'بيع' : 'خدمة'}</span>
+                        </div>
+                        <span class="text-green-500 font-bold text-sm mr-2">${t.total.toFixed(2)} ج.م</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // History
+        function renderHistory() {
+            const filter = document.getElementById('historyFilter')?.value || 'all';
+            const dateFilter = document.getElementById('historyDate')?.value || '';
+            
+            let allTransactions = [
+                ...sales.map(s => ({ 
+                    ...s, 
+                    type: 'sale', 
+                    total: s.grandTotal, 
+                    details: s.items.map(i => i.productName + ' × ' + i.quantity).join('، ')
+                })),
+                ...serviceRecords.map(r => ({ 
+                    ...r, 
+                    type: 'service', 
+                    total: r.price, 
+                    details: r.serviceName + (r.notes ? ' - ' + r.notes : '') 
+                }))
+            ];
+
+            if (filter !== 'all') {
+                allTransactions = allTransactions.filter(t => t.type === filter);
+            }
+            
+            if (dateFilter) {
+                allTransactions = allTransactions.filter(t => t.date.split('T')[0] === dateFilter);
+            }
+
+            allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const tbody = document.getElementById('historyTable');
+            if (allTransactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-secondary text-sm">لا توجد سجلات</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allTransactions.map(t => `
+                <tr class="table-row border-b border-[var(--border)]">
+                    <td class="p-2 md:p-3 text-xs">${new Date(t.date).toLocaleString('ar-EG')}</td>
+                    <td class="p-2 md:p-3">
+                        <span class="px-1 py-0.5 rounded text-xs ${t.type === 'sale' ? 'bg-blue-500' : 'bg-cyan-500'} text-white">
+                            ${t.type === 'sale' ? 'بيع' : 'خدمة'}
+                        </span>
+                    </td>
+                    <td class="p-2 md:p-3 text-xs">${t.details.substring(0, 30)}${t.details.length > 30 ? '...' : ''}</td>
+                    <td class="p-2 md:p-3 text-green-500 font-bold text-sm">${t.total.toFixed(2)} ج.م</td>
+                    <td class="p-2 md:p-3 text-xs">${t.user}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterHistory() {
+            renderHistory();
+        }
+
+        function clearHistoryDateFilter() {
+            document.getElementById('historyDate').value = '';
+            document.getElementById('historyFilter').value = 'all';
+            renderHistory();
+        }
+
+        // Daily Report
+        function loadDailyReport() {
+            const dateStr = document.getElementById('reportDate').value || new Date().toISOString().split('T')[0];
+            
+            const closure = dayClosures.find(d => d.date === dateStr);
+            const dayStatusBanner = document.getElementById('dayStatusBanner');
+            
+            let daySales, dayServices;
+            
+            if (closure && closure.salesDetails && closure.servicesDetails) {
+                daySales = closure.salesDetails;
+                dayServices = closure.servicesDetails;
+                dayStatusBanner.classList.remove('hidden');
+                document.getElementById('dayClosedInfo').textContent = `تم الإغلاق بواسطة ${closure.closedBy} في ${new Date(closure.closedAt).toLocaleString('ar-EG')}`;
+            } else if (closure) {
+                daySales = sales.filter(s => s.date.split('T')[0] === dateStr);
+                dayServices = serviceRecords.filter(r => r.date.split('T')[0] === dateStr);
+                dayStatusBanner.classList.remove('hidden');
+                document.getElementById('dayClosedInfo').textContent = `تم الإغلاق في ${new Date(closure.closedAt).toLocaleString('ar-EG')}`;
+            } else {
+                daySales = sales.filter(s => s.date.split('T')[0] === dateStr);
+                dayServices = serviceRecords.filter(r => r.date.split('T')[0] === dateStr);
+                dayStatusBanner.classList.add('hidden');
+            }
+            
+            const salesTotal = daySales.reduce((sum, s) => sum + s.grandTotal, 0);
+            const servicesTotal = dayServices.reduce((sum, r) => sum + r.price, 0);
+            
+            document.getElementById('reportSalesTotal').textContent = salesTotal.toFixed(2) + ' ج.م';
+            document.getElementById('reportSalesCount').textContent = daySales.length + ' فاتورة';
+            document.getElementById('reportServicesTotal').textContent = servicesTotal.toFixed(2) + ' ج.م';
+            document.getElementById('reportServicesCount').textContent = dayServices.length + ' خدمة';
+            document.getElementById('reportGrandTotal').textContent = (salesTotal + servicesTotal).toFixed(2) + ' ج.م';
+            
+            const salesTbody = document.getElementById('reportSalesTable');
+            if (daySales.length === 0) {
+                salesTbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-secondary text-sm">لا توجد مبيعات</td></tr>';
+            } else {
+                salesTbody.innerHTML = daySales.map(s => `
+                    <tr class="table-row border-b border-[var(--border)]">
+                        <td class="p-2 md:p-3">${new Date(s.date).toLocaleTimeString('ar-EG')}</td>
+                        <td class="p-2 md:p-3 font-mono text-xs">${s.invoiceNumber}</td>
+                        <td class="p-2 md:p-3 text-xs">${s.items.map(i => i.productName).join('، ')}</td>
+                        <td class="p-2 md:p-3 text-green-500 font-bold">${s.grandTotal.toFixed(2)} ج.م</td>
+                        <td class="p-2 md:p-3">${s.user}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            const servicesTbody = document.getElementById('reportServicesTable');
+            if (dayServices.length === 0) {
+                servicesTbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-secondary text-sm">لا توجد خدمات</td></tr>';
+            } else {
+                servicesTbody.innerHTML = dayServices.map(r => `
+                    <tr class="table-row border-b border-[var(--border)]">
+                        <td class="p-2 md:p-3">${new Date(r.date).toLocaleTimeString('ar-EG')}</td>
+                        <td class="p-2 md:p-3">${r.serviceName}</td>
+                        <td class="p-2 md:p-3 text-xs">${r.notes || '-'}</td>
+                        <td class="p-2 md:p-3 text-green-500 font-bold">${r.price.toFixed(2)} ج.م</td>
+                        <td class="p-2 md:p-3">${r.user}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Archived Reports
+        function renderArchivedReports() {
+            const container = document.getElementById('archivedReportsList');
+            
+            if (dayClosures.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full card rounded-xl p-6 md:p-8 text-center">
+                        <div class="w-14 h-14 md:w-16 md:h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                            <svg class="w-6 h-6 md:w-8 md:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2">لا توجد تقارير محفوظة</h3>
+                        <p class="text-secondary text-sm">عندما تقوم بإغلاق يوم سيظهر هنا</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sortedClosures = [...dayClosures].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            container.innerHTML = sortedClosures.map(closure => {
+                const dateDisplay = new Date(closure.date).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                return `
+                    <div class="card rounded-xl p-4 md:p-6 hover:shadow-lg transition">
+                        <div class="flex items-center justify-between mb-3 md:mb-4">
+                            <span class="closed-day-badge text-xs">تم الإغلاق</span>
+                            <span class="text-secondary text-xs">${closure.salesCount + closure.servicesCount} عملية</span>
+                        </div>
+                        <h3 class="text-sm md:text-lg font-bold mb-2">${dateDisplay}</h3>
+                        <div class="space-y-1 md:space-y-2 mb-3 md:mb-4 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-secondary">المبيعات:</span>
+                                <span class="text-blue-500 font-semibold">${closure.salesTotal.toFixed(2)} ج.م</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-secondary">الخدمات:</span>
+                                <span class="text-cyan-500 font-semibold">${closure.servicesTotal.toFixed(2)} ج.م</span>
+                            </div>
+                            <div class="flex justify-between border-t border-[var(--border)] pt-2">
+                                <span class="font-semibold">الإجمالي:</span>
+                                <span class="text-green-500 font-bold text-base md:text-lg">${closure.grandTotal.toFixed(2)} ج.م</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="viewArchivedReport('${closure.date}')" class="flex-1 btn-primary p-2 rounded-lg text-white text-xs transition">
+                                عرض
+                            </button>
+                            <button onclick="printArchivedReport('${closure.date}')" class="flex-1 bg-gray-500 hover:bg-gray-600 p-2 rounded-lg text-white text-xs transition">
+                                طباعة
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function viewArchivedReport(dateStr) {
+            document.getElementById('reportDate').value = dateStr;
+            showSection('dailyReport');
+            loadDailyReport();
+        }
+
+        function printArchivedReport(dateStr) {
+            document.getElementById('reportDate').value = dateStr;
+            loadDailyReport();
+            setTimeout(() => printDailyReport(), 100);
+        }
+
+        function printDailyReport() {
+            const dateStr = document.getElementById('reportDate').value || new Date().toISOString().split('T')[0];
+            
+            const closure = dayClosures.find(d => d.date === dateStr);
+            let daySales, dayServices;
+            
+            if (closure && closure.salesDetails && closure.servicesDetails) {
+                daySales = closure.salesDetails;
+                dayServices = closure.servicesDetails;
+            } else {
+                daySales = sales.filter(s => s.date.split('T')[0] === dateStr);
+                dayServices = serviceRecords.filter(r => r.date.split('T')[0] === dateStr);
+            }
+            
+            const salesTotal = daySales.reduce((sum, s) => sum + s.grandTotal, 0);
+            const servicesTotal = dayServices.reduce((sum, r) => sum + r.price, 0);
+            const dateDisplay = new Date(dateStr).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            let printHTML = `
+                <div style="padding: 20px; font-family: 'Cairo', sans-serif; direction: rtl; max-width: 800px; margin: 0 auto;">
+                    <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #2563eb; padding-bottom: 15px;">
+                        <h1 style="color: #2563eb; font-size: 24px; margin: 0;">PopTop</h1>
+                        <p style="color: #666; margin: 5px 0; font-size: 12px;">نظام إدارة المبيعات</p>
+                        <h2 style="margin: 10px 0 5px; font-size: 18px;">تقرير يومي ${closure ? '(محفوظ)' : ''}</h2>
+                        <p style="color: #666; font-size: 14px;">${dateDisplay}</p>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-around; margin-bottom: 20px; text-align: center; flex-wrap: wrap; gap: 10px;">
+                        <div style="padding: 10px; background: #eff6ff; border-radius: 8px; min-width: 120px; flex: 1;">
+                            <p style="color: #2563eb; font-size: 12px; margin: 0;">إجمالي المبيعات</p>
+                            <p style="font-size: 18px; font-weight: bold; color: #2563eb; margin: 5px 0;">${salesTotal.toFixed(2)} ج.م</p>
+                            <p style="color: #666; font-size: 10px; margin: 0;">${daySales.length} فاتورة</p>
+                        </div>
+                        <div style="padding: 10px; background: #ecfeff; border-radius: 8px; min-width: 120px; flex: 1;">
+                            <p style="color: #0891b2; font-size: 12px; margin: 0;">إجمالي الخدمات</p>
+                            <p style="font-size: 18px; font-weight: bold; color: #0891b2; margin: 5px 0;">${servicesTotal.toFixed(2)} ج.م</p>
+                            <p style="color: #666; font-size: 10px; margin: 0;">${dayServices.length} خدمة</p>
+                        </div>
+                        <div style="padding: 10px; background: #d1fae5; border-radius: 8px; min-width: 120px; flex: 1;">
+                            <p style="color: #059669; font-size: 12px; margin: 0;">الإجمالي الكلي</p>
+                            <p style="font-size: 18px; font-weight: bold; color: #059669; margin: 5px 0;">${(salesTotal + servicesTotal).toFixed(2)} ج.م</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 8px; font-size: 16px;">المبيعات</h3>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="background: #eff6ff;">
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">الوقت</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">رقم الفاتورة</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">المنتجات</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">الإجمالي</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">البائع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${daySales.length === 0 ? '<tr><td colspan="5" style="text-align: center; padding: 15px; color: #999;">لا توجد مبيعات</td></tr>' : 
+                                daySales.map(s => `
+                                    <tr>
+                                        <td style="padding: 6px; border: 1px solid #ddd;">${new Date(s.date).toLocaleTimeString('ar-EG')}</td>
+                                        <td style="padding: 6px; border: 1px solid #ddd; font-family: monospace; font-size: 10px;">${s.invoiceNumber}</td>
+                                        <td style="padding: 6px; border: 1px solid #ddd; font-size: 10px;">${s.items.map(i => i.productName + ' (' + i.quantity + ')').join('، ')}</td>
+                                        <td style="padding: 6px; border: 1px solid #ddd; color: green; font-weight: bold;">${s.grandTotal.toFixed(2)} ج.م</td>
+                                        <td style="padding: 6px; border: 1px solid #ddd;">${s.user}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #0891b2; border-bottom: 2px solid #0891b2; padding-bottom: 8px; font-size: 16px;">الخدمات</h3>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="background: #ecfeff;">
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">الوقت</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">الخدمة</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">الملاحظات</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">السعر</th>
+                                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">البائع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${dayServices.length === 0 ? '<tr><td colspan="5" style="text-align: center; padding: 15px; color: #999;">لا توجد خدمات</td></tr>' : 
+                                dayServices.map(r => `
+                                    <tr>
+                                        <td style="padding: 6px; border: 1px solid #ddd;">${new Date(r.date).toLocaleTimeString('ar-EG')}</td>
+                                        <td style="padding: 6px; border: 1px solid #ddd;">${r.serviceName}</td>
+                                        <td style="padding: 6px; border: 1px solid #ddd; font-size: 10px;">${r.notes || '-'}</td>
+                                        <td style="padding: 6px; border: 1px solid #ddd; color: green; font-weight: bold;">${r.price.toFixed(2)} ج.م</td>
+                                        <td style="padding: 6px; border: 1px solid #ddd;">${r.user}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #ddd; color: #666;">
+                        <p style="margin: 5px 0;">PopTop - نظام إدارة المبيعات</p>
+                        <p style="font-size: 10px; margin: 5px 0;">تم الإنشاء بواسطة: Ahmed Akl & Mahmoud Akl</p>
+                        <p style="font-size: 9px; margin-top: 8px;">تم طباعة هذا التقرير في: ${new Date().toLocaleString('ar-EG')}</p>
+                    </div>
+                </div>
+            `;
+            
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = printHTML;
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden');
+        }
+
+        function exportData() {
+            const data = {
+                products,
+                sales,
+                serviceTypes,
+                serviceRecords,
+                dayClosures,
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'poptop_backup_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            showNotification('تم تصدير البيانات بنجاح');
+        }
+
+        // Notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-20 md:top-4 left-4 right-4 md:right-auto px-4 py-3 rounded-lg text-white z-50 animate-fade text-sm text-center md:text-right ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Refresh All Data
+        function refreshAllData() {
+            renderProducts();
+            updateSaleProductOptions();
+            renderCart();
+            renderSales();
+            renderServiceTypes();
+            updateServiceOptions();
+            renderServiceRecords();
+            updateDashboard();
+            renderHistory();
+            loadDailyReport();
+            renderArchivedReports();
+        }
+    </script>
+</body>
+</html>
